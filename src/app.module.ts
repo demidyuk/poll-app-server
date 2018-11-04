@@ -33,7 +33,6 @@ import { ConfigService } from './config/config.service';
         path: '/api/graphql',
         playground: config.isDev,
         typePaths: ['./**/*.graphql'],
-
         debug: true,
         formatError: error => ({
           message: error.message,

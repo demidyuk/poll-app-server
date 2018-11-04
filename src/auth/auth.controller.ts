@@ -29,7 +29,7 @@ export class AuthController {
   async loginCallback(@Req() req, @Res() res) {
     res.redirect(
       this.clientUrl +
-        '/singin/' +
+        '/signin/' +
         (await this.authService.createToken(req.user.id)),
     );
   }
