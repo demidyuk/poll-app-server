@@ -1,0 +1,26 @@
+type Poll {
+  id: ID!
+  author: User
+  answer: ID
+  question: String!
+  options: [Option]!
+}
+
+type Option {
+  id: ID!
+  value: String!
+  votes: Int
+}
+
+input OptionInput {
+  value: String!
+}
+
+type Query {
+  poll(id: ID!): Poll
+}
+
+type Mutation {
+  createPoll(question: String!, options: [OptionInput]!): Poll
+  vote(pollId: ID!, optionId: ID!): Int
+}

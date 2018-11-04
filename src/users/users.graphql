@@ -1,0 +1,16 @@
+type User {
+  id: ID!
+  email: String
+  profile: Profile
+  polls: [Poll]
+}
+
+type Profile {
+  name: String!
+  avatar: String!
+  github_username: String!
+}
+
+type Query {
+  user(id: ID): User
+}
