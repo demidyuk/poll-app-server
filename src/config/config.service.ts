@@ -10,10 +10,20 @@ export class ConfigService {
   private readonly envConfig: EnvConfig;
 
   constructor(filePath: string) {
-    const config = dotenv.parse(fs.readFileSync(filePath));
-    this.envConfig = this.validateInput(
-      Object.assign({ NODE_ENV: process.env.NODE_ENV }, config),
-    );
+    let config;
+    try {
+      config = Object.assign(
+        { NODE_ENV: process.env.NODE_ENV },
+        dotenv.parse(fs.readFileSync(filePath)),
+      );
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        config = Object.assign({}, process.env);
+      } else {
+        throw err;
+      }
+    }
+    this.envConfig = this.validateInput(config);
   }
 
   private validateInput(envConfig: EnvConfig): EnvConfig {
@@ -29,7 +39,7 @@ export class ConfigService {
       GITHUB_ID: Joi.string().required(),
       GITHUB_SECRET: Joi.string().required(),
       GITHUB_CALLBACK: Joi.string().required(),
-    });
+    }).unknown();
 
     const { error, value: validatedEnvConfig } = Joi.validate(
       envConfig,
