@@ -30,4 +30,10 @@ export class UserResolver {
       return email;
     }
   }
+
+  @ResolveProperty()
+  async polls(@Parent() { id }) {
+    const polls = await this.usersService.getUserPolls(id);
+    return polls.map(p => p.obj);
+  }
 }

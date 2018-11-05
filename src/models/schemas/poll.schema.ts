@@ -20,3 +20,12 @@ export const PollSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+PollSchema.virtual('obj').get(function() {
+  const obj = this.toObject();
+  return {
+    id: obj._id,
+    ...obj,
+    options: obj.options.map(o => ({ pollId: obj._id, ...o })),
+  };
+});

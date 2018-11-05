@@ -25,10 +25,7 @@ export class PollResolver {
   async poll(@Args('id') pollId: string) {
     const poll = await this.pollsService.find(pollId);
     if (!poll) throw PollsErrors.POLL_NOT_FOUND(pollId);
-    return {
-      ...poll,
-      options: poll.options.map(o => ({ pollId, ...o })),
-    };
+    return poll.obj;
   }
 
   @ResolveProperty()
@@ -39,14 +36,15 @@ export class PollResolver {
   }
 
   @ResolveProperty()
-  async author(@Parent() { authorId }, @User() user) {
+  async author(@Parent() { authorId }) {
     return await this.usersService.find(authorId);
   }
 
   @UseGuards(GqlAuthGuard())
   @Mutation('createPoll')
   async create(@Args() { question, options }, @User() user) {
-    return await this.pollsService.create(user.id, question, options);
+    const poll = await this.pollsService.create(user.id, question, options);
+    return poll.obj;
   }
 
   @UseGuards(GqlAuthGuard())

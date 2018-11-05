@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { PollsErrors } from './polls.errors';
-import { PollDocument, Poll } from './interfaces/poll.interface';
+import { Poll } from '../models';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '../config/config.service';
 import { normalize } from '../util/normalize';
@@ -11,28 +11,23 @@ export class PollsService {
   private bucketCapacity: number;
   constructor(
     config: ConfigService,
-    @InjectModel('Poll') private readonly pollModel: Model<PollDocument>,
+    @InjectModel('Poll') private readonly pollModel: Model<Poll>,
     @InjectModel('Vote') private readonly voteModel: Model<any>,
   ) {
     this.bucketCapacity = config.bucketCapacity;
   }
 
-  @normalize()
   async create(
     authorId: string,
     question: string,
     options: { value: string }[],
   ): Promise<Poll> {
     const poll = new this.pollModel({ authorId, question, options });
-    return (await poll.save()).toObject();
+    return await poll.save();
   }
 
-  @normalize()
   async find(pollId: string): Promise<Poll> {
-    return await this.pollModel
-      .findById(pollId)
-      .lean()
-      .exec();
+    return await this.pollModel.findById(pollId).exec();
   }
 
   async getAnswer(pollId: string, userId: string): Promise<string> {

@@ -7,7 +7,7 @@ export class VotesLoader {
   constructor(private readonly pollsService: PollsService) {}
 
   create() {
-    return new DataLoader(this.getVotes.bind(this));
+    return new DataLoader(this.getVotes.bind(this), { batch: false });
   }
 
   private async getVotes([pollId]) {

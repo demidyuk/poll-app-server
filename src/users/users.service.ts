@@ -1,7 +1,6 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-import { UserDocument, User } from './interfaces/user.interface';
-import { normalize } from '../util/normalize';
+import { User, Poll } from '../models';
 import { InjectModel } from '@nestjs/mongoose';
 import * as shortid from 'shortid';
 
@@ -16,10 +15,10 @@ interface CreateOrUpdateOptions {
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel('User') private readonly userModel: Model<UserDocument>,
+    @InjectModel('User') private readonly userModel: Model<User>,
+    @InjectModel('Poll') private readonly pollModel: Model<Poll>,
   ) {}
 
-  @normalize()
   async createOrUpdate({
     name,
     github_username,
@@ -42,15 +41,18 @@ export class UsersService {
             },
         { setDefaultsOnInsert: true, upsert: true, new: true },
       )
-      .lean()
       .exec();
   }
 
-  @normalize()
   async find(userId: string): Promise<User> {
-    return await this.userModel
-      .findById(userId)
-      .lean()
+    return await this.userModel.findById(userId).exec();
+  }
+
+  async getUserPolls(userId: string): Promise<Poll[]> {
+    return await this.pollModel
+      .find({ authorId: userId })
+      .sort([['createdAt', -1]])
+      .limit(20)
       .exec();
   }
 }

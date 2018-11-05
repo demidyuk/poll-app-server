@@ -4,18 +4,10 @@ import { OptionResolver } from './resolvers/option.resolver';
 import { PollsService } from './polls.service';
 import { VotesLoader } from './loaders/votes.loader';
 import { UsersModule } from '../users/users.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { PollSchema } from './schemas/poll.schema';
-import { VoteSchema } from './schemas/vote.schema';
+import { ModelsModule } from '../models';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: 'Poll', schema: PollSchema },
-      { name: 'Vote', schema: VoteSchema },
-    ]),
-    UsersModule,
-  ],
+  imports: [ModelsModule, UsersModule],
   providers: [PollsService, VotesLoader, PollResolver, OptionResolver],
   exports: [VotesLoader],
 })
