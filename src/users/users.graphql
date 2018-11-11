@@ -2,11 +2,11 @@ type User {
   id: ID!
   email: String
   profile: Profile
-  polls: [Poll]
+  polls: [Poll!]
 }
 
 type Profile {
-  name: String!
+  name: String
   avatar: String!
   github_username: String!
 }

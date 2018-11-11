@@ -3,7 +3,7 @@ type Poll {
   author: User
   answer: ID
   question: String!
-  options: [Option]!
+  options: [Option!]!
 }
 
 type Option {
@@ -21,6 +21,6 @@ type Query {
 }
 
 type Mutation {
-  createPoll(question: String!, options: [OptionInput]!): Poll
+  createPoll(question: String!, options: [OptionInput!]!): Poll
   vote(pollId: ID!, optionId: ID!): Int
 }

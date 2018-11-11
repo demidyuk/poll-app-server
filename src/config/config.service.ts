@@ -32,6 +32,7 @@ export class ConfigService {
         .valid(['development', 'production'])
         .default('development'),
       CLIENT_URL: Joi.string().required(),
+      GRAPHQL_DEPTH_LIMIT: Joi.number().default(3),
       MONGO_URI: Joi.string().required(),
       BUCKET_CAPACITY: Joi.number().required(),
       JWT_SECRET: Joi.string().required(),
@@ -58,6 +59,9 @@ export class ConfigService {
     return this.envConfig.CLIENT_URL;
   }
 
+  get gqlDepthLimit(): number {
+    return +this.envConfig.GRAPHQL_DEPTH_LIMIT;
+  }
   get mongoUri(): string {
     return this.envConfig.MONGO_URI;
   }

@@ -12,6 +12,7 @@ import { PollsService } from '../polls.service';
 import { UsersService } from '../../users/users.service';
 import { User } from '../../users/decorators/user.decorator';
 import { PollsErrors } from '../polls.errors';
+import { CreatePollDto, GetPollDto, VoteDto } from '../dto';
 
 @Resolver('Poll')
 export class PollResolver {
@@ -22,9 +23,9 @@ export class PollResolver {
 
   @UseGuards(GqlAuthGuard(false))
   @Query()
-  async poll(@Args('id') pollId: string) {
-    const poll = await this.pollsService.find(pollId);
-    if (!poll) throw PollsErrors.POLL_NOT_FOUND(pollId);
+  async poll(@Args() { id }: GetPollDto) {
+    const poll = await this.pollsService.find(id);
+    if (!poll) throw PollsErrors.POLL_NOT_FOUND(id);
     return poll.obj;
   }
 
@@ -42,14 +43,14 @@ export class PollResolver {
 
   @UseGuards(GqlAuthGuard())
   @Mutation('createPoll')
-  async create(@Args() { question, options }, @User() user) {
+  async create(@Args() { question, options }: CreatePollDto, @User() user) {
     const poll = await this.pollsService.create(user.id, question, options);
     return poll.obj;
   }
 
   @UseGuards(GqlAuthGuard())
   @Mutation('vote')
-  async vote(@Args() { pollId, optionId }, @User() user) {
+  async vote(@Args() { pollId, optionId }: VoteDto, @User() user) {
     return await this.pollsService.vote(user.id, pollId, optionId);
   }
 }

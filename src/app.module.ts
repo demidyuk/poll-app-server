@@ -10,6 +10,8 @@ import { ConfigModule } from './config/config.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DevGuard } from './dev.guard';
 import { ConfigService } from './config/config.service';
+import { formatGqlError } from './util/formatGqlError';
+import depthLimit = require('graphql-depth-limit');
 
 @Module({
   imports: [
@@ -34,10 +36,8 @@ import { ConfigService } from './config/config.service';
         playground: config.isDev,
         typePaths: ['./**/*.graphql'],
         debug: true,
-        formatError: error => ({
-          message: error.message,
-          extensions: error.extensions,
-        }),
+        validationRules: [depthLimit(config.gqlDepthLimit)],
+        formatError: formatGqlError,
       }),
       inject: [ConfigService, VotesLoader],
     }),

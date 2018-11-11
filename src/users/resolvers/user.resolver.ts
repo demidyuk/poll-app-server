@@ -9,6 +9,7 @@ import { UseGuards } from '@nestjs/common';
 import { UsersService } from '../users.service';
 import { User } from '../decorators/user.decorator';
 import { GqlAuthGuard } from '../../auth/guards/gql.guard';
+import { GetUserDto } from '../dto';
 
 @Resolver('User')
 export class UserResolver {
@@ -16,7 +17,7 @@ export class UserResolver {
 
   @UseGuards(GqlAuthGuard(false))
   @Query()
-  async user(@Args('id') id: string, @User() user) {
+  async user(@Args() { id }: GetUserDto, @User() user) {
     if (id) {
       return await this.usersService.find(id);
     } else if (user) {
