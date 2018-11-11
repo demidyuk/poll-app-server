@@ -1,6 +1,6 @@
 import { IsValidId } from '../../util/isValidId';
 
 export class GetUserDto {
-  @IsValidId()
+  @IsValidId(true)
   id: string;
 }
