@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PollsModule } from './polls/polls.module';
+import { GroupsModule } from './groups/groups.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { APP_FILTER } from '@nestjs/core';
 import { ExceptionsFilter } from './exception.filter';
@@ -28,6 +29,7 @@ import depthLimit = require('graphql-depth-limit');
     AuthModule,
     UsersModule,
     PollsModule,
+    GroupsModule,
     GraphQLModule.forRootAsync({
       imports: [PollsModule],
       useFactory: async (config: ConfigService, votesLoader: VotesLoader) => ({

@@ -1,6 +1,6 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-import { User, Poll } from '../models';
+import { User } from '../models';
 import { InjectModel } from '@nestjs/mongoose';
 import * as shortid from 'shortid';
 
@@ -14,10 +14,7 @@ interface CreateOrUpdateOptions {
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectModel('User') private readonly userModel: Model<User>,
-    @InjectModel('Poll') private readonly pollModel: Model<Poll>,
-  ) {}
+  constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
 
   async createOrUpdate({
     name,
@@ -46,13 +43,5 @@ export class UsersService {
 
   async find(userId: string): Promise<User> {
     return await this.userModel.findById(userId).exec();
-  }
-
-  async getUserPolls(userId: string): Promise<Poll[]> {
-    return await this.pollModel
-      .find({ authorId: userId })
-      .sort([['createdAt', -1]])
-      .limit(20)
-      .exec();
   }
 }

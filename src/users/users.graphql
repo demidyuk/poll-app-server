@@ -3,6 +3,8 @@ type User {
   email: String
   profile: Profile
   polls: [Poll!]
+  groups: [Group!]
+  createdAt: String!
 }
 
 type Profile {

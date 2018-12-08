@@ -1,59 +1,123 @@
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { PollsErrors } from './polls.errors';
-import { Poll } from '../models';
+import { Poll, User } from '../models';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '../config/config.service';
 import { normalize } from '../util/normalize';
+
+interface CreatePollOptions {
+  question: string;
+  options: { value: string }[];
+}
+
+interface UpdatePollOptions extends CreatePollOptions {
+  pollId: string;
+}
+
+interface VoteOptions {
+  pollId: string;
+  optionId: string;
+}
+
+interface Option {
+  id: string;
+  value: string;
+  num_buckets: number;
+}
 
 @Injectable()
 export class PollsService {
   private bucketCapacity: number;
   constructor(
-    config: ConfigService,
+    { bucketCapacity }: ConfigService,
     @InjectModel('Poll') private readonly pollModel: Model<Poll>,
     @InjectModel('Vote') private readonly voteModel: Model<any>,
   ) {
-    this.bucketCapacity = config.bucketCapacity;
+    this.bucketCapacity = bucketCapacity;
   }
 
   async create(
-    authorId: string,
-    question: string,
-    options: { value: string }[],
+    user: User,
+    { question, options }: CreatePollOptions,
   ): Promise<Poll> {
-    const poll = new this.pollModel({ authorId, question, options });
+    const poll = new this.pollModel({ authorId: user.id, question, options });
     return await poll.save();
   }
 
-  async find(pollId: string): Promise<Poll> {
-    return await this.pollModel.findById(pollId).exec();
+  async update(user: User, { pollId, question, options }: UpdatePollOptions) {
+    const poll = await this.pollModel.findOneAndUpdate(
+      { _id: pollId, authorId: user.id, published: false },
+      { question, options },
+      { new: true },
+    );
+    return poll;
   }
 
-  async getAnswer(pollId: string, userId: string): Promise<string> {
-    const [option] = await this.voteModel
-      .aggregate([
-        {
-          $match: {
-            pollId,
-            'votes.userId': userId,
-          },
+  async find(user: User, pollId: string): Promise<Poll> {
+    const poll = await this.pollModel.findById(pollId);
+    if (poll) {
+      if (poll.published === true) {
+        return poll;
+      } else if (poll.published === false && poll.authorId === user.id) {
+        return poll;
+      }
+    }
+    return null;
+  }
+
+  async getForGroup(user: User, groupId: string) {
+    return await this.pollModel.find({ authorId: user.id, groupId });
+  }
+
+  async getForUser(user: User, userId: string): Promise<Poll[]> {
+    let query = { authorId: user.id, groupId: { $exists: false } };
+    if (!(user && user.id === userId)) {
+      query = Object.assign(query, { published: true });
+    }
+    return await this.pollModel
+      .find(query)
+      .sort([['createdAt', -1]])
+      .limit(20);
+  }
+
+  async publish(user: User, pollIds: [string]) {
+    const result = await this.pollModel.updateMany(
+      {
+        _id: { $in: pollIds },
+        authorId: user.id,
+        published: false,
+        groupId: { $exists: false },
+      },
+      {
+        published: true,
+      },
+    );
+    return !!result.nModified;
+  }
+
+  async getAnswer(user: User, pollId: string): Promise<string> {
+    const [option] = await this.voteModel.aggregate([
+      {
+        $match: {
+          pollId,
+          'votes.userId': user.id,
         },
-        {
-          $project: { _id: '$optionId' },
-        },
-      ])
-      .exec();
+      },
+      {
+        $project: { _id: '$optionId' },
+      },
+    ]);
     return option ? option._id : null;
   }
 
-  async hasUserVoted(pollId: string, userId: string): Promise<boolean> {
+  private async hasUserVoted(user: User, pollId: string): Promise<boolean> {
     const results = await this.voteModel
       .aggregate([
         {
           $match: {
             pollId,
-            'votes.userId': userId,
+            'votes.userId': user.id,
           },
         },
         {
@@ -81,69 +145,56 @@ export class PollsService {
       .exec();
   }
 
-  async findOption(
-    pollId: string,
-    optionId: string,
-  ): Promise<{ id: string; value: string; num_buckets: number }> {
-    const [option] = await this.pollModel
-      .aggregate([
-        { $match: { _id: pollId } },
-        { $unwind: '$options' },
-        { $match: { 'options.id': optionId } },
-        {
-          $project: {
-            _id: 0,
-            id: '$options.id',
-            value: '$options.value',
-            num_buckets: '$options.num_buckets',
-          },
+  private async findOption(pollId: string, optionId: string): Promise<Option> {
+    const [option] = await this.pollModel.aggregate([
+      { $match: { _id: pollId, published: true } },
+      { $unwind: '$options' },
+      { $match: { 'options.id': optionId } },
+      {
+        $project: {
+          _id: 0,
+          id: '$options.id',
+          value: '$options.value',
+          num_buckets: '$options.num_buckets',
         },
-      ])
-      .exec();
+      },
+    ]);
     return option;
   }
 
-  async vote(
-    userId: string,
-    pollId: string,
-    optionId: string,
-  ): Promise<number> {
+  async vote(user: User, { pollId, optionId }: VoteOptions): Promise<number> {
     const option = await this.findOption(pollId, optionId);
 
     if (!option) throw PollsErrors.OPTION_NOT_FOUND(pollId + '.' + optionId);
 
     const bucket = option.num_buckets;
 
-    if (!(await this.hasUserVoted(pollId, userId))) {
-      const { count } = await this.voteModel
-        .findOneAndUpdate(
-          {
-            pollId,
-            optionId,
-            bucket,
-          },
-          {
-            $inc: { count: 1 },
-            $push: { votes: { userId } },
-          },
-          {
-            fields: { _id: 0, count: 1 },
-            upsert: true,
-            new: true,
-          },
-        )
-        .exec();
+    if (!(await this.hasUserVoted(user, pollId))) {
+      const { count } = await this.voteModel.findOneAndUpdate(
+        {
+          pollId,
+          optionId,
+          bucket,
+        },
+        {
+          $inc: { count: 1 },
+          $push: { votes: { userId: user.id } },
+        },
+        {
+          fields: { _id: 0, count: 1 },
+          upsert: true,
+          new: true,
+        },
+      );
 
       if (count >= this.bucketCapacity) {
-        await this.pollModel
-          .updateOne(
-            {
-              pollId,
-              options: { $elemMatch: { id: optionId, num_buckets: bucket } },
-            },
-            { $inc: { 'options.$.num_buckets': 1 } },
-          )
-          .exec();
+        await this.pollModel.updateOne(
+          {
+            pollId,
+            options: { $elemMatch: { id: optionId, num_buckets: bucket } },
+          },
+          { $inc: { 'options.$.num_buckets': 1 } },
+        );
       }
       return count;
     } else throw PollsErrors.ALREADY_VOTED();

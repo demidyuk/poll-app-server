@@ -1,9 +1,11 @@
 type Poll {
   id: ID!
+  published: Boolean!
   author: User
   answer: ID
   question: String!
   options: [Option!]!
+  createdAt: String!
 }
 
 type Option {
@@ -16,11 +18,29 @@ input OptionInput {
   value: String!
 }
 
+input CreatePollInput {
+  question: String!
+  options: [OptionInput!]!
+}
+
+input UpdatePollInput {
+  id: String!
+  question: String!
+  options: [OptionInput!]!
+}
+
+input VoteInput {
+  pollId: ID!
+  optionId: ID!
+}
+
 type Query {
   poll(id: ID!): Poll
 }
 
 type Mutation {
-  createPoll(question: String!, options: [OptionInput!]!): Poll
-  vote(pollId: ID!, optionId: ID!): Int
+  createPoll(createPollInput: CreatePollInput!): Poll
+  updatePoll(updatePollInput: UpdatePollInput!): Poll
+  publishPoll(id: String!): Boolean
+  vote(voteInput: VoteInput!): Int
 }

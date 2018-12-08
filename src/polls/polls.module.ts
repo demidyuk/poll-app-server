@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PollResolver } from './resolvers/poll.resolver';
 import { OptionResolver } from './resolvers/option.resolver';
 import { PollsService } from './polls.service';
@@ -7,8 +7,8 @@ import { UsersModule } from '../users/users.module';
 import { ModelsModule } from '../models';
 
 @Module({
-  imports: [ModelsModule, UsersModule],
+  imports: [ModelsModule, forwardRef(() => UsersModule)],
   providers: [PollsService, VotesLoader, PollResolver, OptionResolver],
-  exports: [VotesLoader],
+  exports: [PollsService, VotesLoader],
 })
 export class PollsModule {}

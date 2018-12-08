@@ -1,0 +1,22 @@
+type Group {
+  id: ID!
+  name: String!
+  polls: [Poll!]
+  published: Boolean
+  createdAt: String!
+}
+
+input AddPollInput {
+  groupId: String!
+  pollId: String!
+}
+
+type Query {
+  group(id: ID!): Group
+}
+
+type Mutation {
+  createGroup(name: String!): Group
+  publishGroup(id: String!): Boolean
+  addPollToGroup(addPollInput: AddPollInput!): Boolean
+}

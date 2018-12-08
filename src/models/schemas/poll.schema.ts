@@ -6,6 +6,13 @@ export const PollSchema = new mongoose.Schema(
     _id: { type: String, default: shortid.generate },
     question: String,
     authorId: String,
+    groupId: {
+      type: String,
+      index: {
+        sparse: true,
+      },
+    },
+    published: { type: Boolean, default: false },
     options: [
       {
         _id: false,
