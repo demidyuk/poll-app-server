@@ -11,6 +11,11 @@ input AddPollInput {
   pollId: String!
 }
 
+input RemovePollInput {
+  groupId: String!
+  pollId: String!
+}
+
 type Query {
   group(id: ID!): Group
 }
@@ -19,4 +24,5 @@ type Mutation {
   createGroup(name: String!): Group
   publishGroup(id: String!): Boolean
   addPollToGroup(addPollInput: AddPollInput!): Boolean
+  removePollFromGroup(removePollInput: RemovePollInput!): Boolean
 }

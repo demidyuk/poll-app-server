@@ -12,7 +12,7 @@ import { GroupsService } from '../groups.service';
 import { User } from '../../users/decorators/user.decorator';
 import { GroupsErrors } from '../groups.errors';
 import { PollsService } from '../../polls/polls.service';
-import { CreateGroupDto, GetGroupDto, AddPollDto } from '../dto';
+import { CreateGroupDto, GetGroupDto, AddPollDto, RemovePollDto } from '../dto';
 
 @Resolver('Group')
 export class GroupResolver {
@@ -49,6 +49,15 @@ export class GroupResolver {
     @User() user,
   ) {
     return await this.groupService.addPoll(user, { groupId, pollId });
+  }
+
+  @UseGuards(GqlAuthGuard())
+  @Mutation('removePollFromGroup')
+  async removePoll(
+    @Args('removePollInput') { groupId, pollId }: RemovePollDto,
+    @User() user,
+  ) {
+    return await this.groupService.removePoll(user, { groupId, pollId });
   }
 
   @UseGuards(GqlAuthGuard())

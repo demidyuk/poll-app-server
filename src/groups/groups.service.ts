@@ -9,6 +9,11 @@ interface AddPollOptions {
   pollId: string;
 }
 
+interface RemovePollOptions {
+  groupId: string;
+  pollId: string;
+}
+
 @Injectable()
 export class GroupsService {
   constructor(
@@ -77,6 +82,33 @@ export class GroupsService {
         { _id: pollId },
         {
           $set: { groupId },
+        },
+      );
+      return true;
+    }
+    return false;
+  }
+
+  async removePoll(user: User, { groupId, pollId }: RemovePollOptions) {
+    const group = await this.find(user, groupId);
+    const poll = await this.pollsService.find(user, pollId);
+    if (!(group && !group.published && group.count > 0)) {
+      return false;
+    }
+    if (!(poll && !poll.published && poll.groupId === groupId)) {
+      return false;
+    }
+    const result = await this.groupModel.updateOne(
+      { _id: groupId, count: group.count },
+      {
+        $inc: { count: -1 },
+      },
+    );
+    if (result.n) {
+      await this.pollModel.updateOne(
+        { _id: pollId },
+        {
+          $unset: { groupId: '' },
         },
       );
       return true;
