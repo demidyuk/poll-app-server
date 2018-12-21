@@ -66,8 +66,8 @@ export class PollsService {
     return null;
   }
 
-  async getForGroup(user: User, groupId: string) {
-    return await this.pollModel.find({ authorId: user.id, groupId });
+  async getForGroup(groupId: string) {
+    return await this.pollModel.find({ groupId });
   }
 
   async getForUser(user: User, userId: string): Promise<Poll[]> {

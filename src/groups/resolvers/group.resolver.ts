@@ -31,7 +31,7 @@ export class GroupResolver {
 
   @ResolveProperty('polls')
   async polls(@Parent() { id }, @User() user) {
-    const polls = await this.pollsService.getForGroup(user, id);
+    const polls = await this.pollsService.getForGroup(id);
     return polls.map(p => p.obj);
   }
 
